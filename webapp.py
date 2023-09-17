@@ -36,14 +36,6 @@ def analyze_sentiment(text):
     if float(sentiment_scores['compound']) < -0.5:
         st.write("Highly Negative")
 
-# Create a button to analyze sentiment
-if st.button("Analyze"):
-    if user_input:
-        sentiment = analyze_sentiment(user_input)
-        st.write(f"Sentiment: {sentiment}")
-    else:
-        st.warning("Please enter some text for analysis.")
-
 # Add an about section (optional)
 st.sidebar.subheader("About")
 st.sidebar.info("This is a sentiment analysis tool using VADER and Streamlit.")
