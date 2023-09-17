@@ -56,7 +56,6 @@ if uploaded_file is not None:
         try:
             df = pd.read_csv(uploaded_file)
             st.subheader("Sentiment Analysis for Uploaded CSV File")
-            st.write(df)
             df = analyze_sentiment_df(df, 'Comments')  # Assuming 'Text' is the column with text data
             st.write(sentiment + ": " + df)
         except Exception as e:
@@ -66,7 +65,7 @@ if uploaded_file is not None:
         st.subheader("Sentiment Analysis for Uploaded Text File")
         st.write(file_content)
         sentiment = analyze_sentiment(file_content)
-        st.write(f"Sentiment: {sentiment}")
+        st.write(sentiment + ": " + df)
 
 # Add an about section (optional)
 st.sidebar.subheader("About")
