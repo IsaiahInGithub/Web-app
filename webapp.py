@@ -75,8 +75,4 @@ st.sidebar.info("This is a sentiment analysis tool using VADER and Streamlit.")
 # Run the app
 if __name__ == "__main__":
     st.set_option('deprecation.showfileUploaderEncoding', False)  # To hide a warning
-    st.set_page_config(
-        page_title="Sentiment Analysis Tool with VADER",
-        page_icon=":speech_balloon:",
-    )
     st.write("Enter some text, click 'Analyze,' or upload a file for sentiment analysis.")
