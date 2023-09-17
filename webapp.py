@@ -8,6 +8,8 @@ st.set_page_config(
     page_icon=":speech_balloon:",
 )
 
+uploaded_file = st.sidebar.file_uploader("Choose a CSV or Text file", type=["csv", "txt"])
+
 # Download the VADER lexicon (only needed once)
 nltk.download('vader_lexicon')
 
@@ -43,6 +45,24 @@ if st.button("Analyze"):
         st.write(f"Sentiment: {sentiment}")
     else:
         st.warning("Please enter some text for analysis.")
+
+if uploaded_file is not None:
+    file_extension = uploaded_file.name.split(".")[-1]
+    if file_extension == "csv":
+        try:
+            df = pd.read_csv(uploaded_file)
+            st.subheader("Sentiment Analysis for Uploaded CSV File")
+            st.write(df)
+            df = analyze_sentiment_df(df, 'Text')  # Assuming 'Text' is the column with text data
+            st.write(df)
+        except Exception as e:
+            st.error(f"Error reading the CSV file: {e}")
+    elif file_extension == "txt":
+        file_content = uploaded_file.read()
+        st.subheader("Sentiment Analysis for Uploaded Text File")
+        st.write(file_content)
+        sentiment = analyze_sentiment(file_content)
+        st.write(f"Sentiment: {sentiment}")
 
 # Add an about section (optional)
 st.sidebar.subheader("About")
