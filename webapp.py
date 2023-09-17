@@ -1,6 +1,7 @@
 # Import necessary libraries
 import streamlit as st
 import nltk
+import pandas as pd
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 st.set_page_config(
