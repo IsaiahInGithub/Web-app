@@ -58,7 +58,7 @@ if uploaded_file is not None:
             df = pd.read_csv(uploaded_file)
             st.subheader("Sentiment Analysis for Uploaded CSV File")
             st.write(df)
-            df = analyze_sentiment_df(df, 'Text')  # Assuming 'Text' is the column with text data
+            df = analyze_sentiment_df(df, 'Comments')  # Assuming 'Text' is the column with text data
             st.write(df)
         except Exception as e:
             st.error(f"Error reading the CSV file: {e}")
