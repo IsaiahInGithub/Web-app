@@ -39,14 +39,18 @@ def analyze_sentiment(text):
     if float(sentiment_scores['compound']) < -0.5:
         st.write("Highly Negative")
 
-# Create a button to analyze sentiment
-if st.button("Analyze"):
-    if user_input:
-        sentiment = analyze_sentiment(user_input)
-        st.write(f"Sentiment: {sentiment}")
-    else:
-        st.warning("Please enter some text for analysis.")
+def analyze_sentiment_df(df, column_name):
+    df['Sentiment'] = df[column_name].apply(analyze_sentiment)
+    return df
 
+    # Create a button to analyze sentiment
+    if st.button("Analyze"):
+        if user_input:
+            sentiment = analyze_sentiment(user_input)
+            st.write(f"Sentiment: {sentiment}")
+        else:
+            st.warning("Please enter some text for analysis.")
+    
 if uploaded_file is not None:
     file_extension = uploaded_file.name.split(".")[-1]
     if file_extension == "csv":
