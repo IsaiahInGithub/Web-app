@@ -47,7 +47,6 @@ def analyze_sentiment_df(df, column_name):
     if st.button("Analyze"):
         if user_input:
             sentiment = analyze_sentiment(user_input)
-            st.write(f"Sentiment: {sentiment}")
         else:
             st.warning("Please enter some text for analysis.")
     
@@ -59,7 +58,7 @@ if uploaded_file is not None:
             st.subheader("Sentiment Analysis for Uploaded CSV File")
             st.write(df)
             df = analyze_sentiment_df(df, 'Comments')  # Assuming 'Text' is the column with text data
-            st.write(df)
+            st.write(sentiment + ": " + df)
         except Exception as e:
             st.error(f"Error reading the CSV file: {e}")
     elif file_extension == "txt":
