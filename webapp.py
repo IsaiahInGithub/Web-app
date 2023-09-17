@@ -26,20 +26,21 @@ def analyze_sentiment(text):
     sentiment_scores = sid.polarity_scores(text)
     
     if float(sentiment_scores['compound']) >= 0.5:
-        st.write("Sentiment: Highly Positive")
+        st.write("Highly Positive")
     if float(sentiment_scores['compound']) < 0.5 and float(sentiment_scores['compound']) > 0:
-        st.write("Sentiment: Slightly Positive")
+        st.write("Slightly Positive")
     if float(sentiment_scores['compound']) == 0:
-        st.write("Sentiment: Neutral")
+        st.write("Neutral")
     if float(sentiment_scores['compound']) < 0 and float(sentiment_scores['compound']) >= -0.5:
-        st.write("Sentiment: Slightly Negative")
+        st.write("Slightly Negative")
     if float(sentiment_scores['compound']) < -0.5:
-        st.write("Sentiment: Highly Negative")
+        st.write("Highly Negative")
 
 # Create a button to analyze sentiment
 if st.button("Analyze"):
     if user_input:
-        analyze_sentiment(user_input)
+        sentiment = analyze_sentiment(user_input)
+        st.write(f"Sentiment: {sentiment}")
     else:
         st.warning("Please enter some text for analysis.")
 
