@@ -31,9 +31,11 @@ def analyze_sentiment_df(df, column_name):
     df['Sentiment'] = df[column_name].apply(analyze_sentiment)
     return df
 
+# Initialize sentiment_table as an empty list
+sentiment_table = []
+
 # Create a button to analyze sentiment
 if st.button("Analyze"):
-    sentiment_table = []
     if user_input:
         sentiment_scores = analyze_sentiment(user_input)
         sentiment_table.append(sentiment_scores)
@@ -50,7 +52,7 @@ if uploaded_file is not None:
             st.write(df)
             # Replace 'YourColumnName' with the actual column name containing text data
             df = analyze_sentiment_df(df, 'YourColumnName')
-            sentiment_table = df['Sentiment'].tolist()
+            sentiment_table.extend(df['Sentiment'].tolist())
         except Exception as e:
             st.error(f"Error reading the CSV file: {e}")
     elif file_extension == "txt":
