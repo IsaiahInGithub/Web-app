@@ -7,6 +7,7 @@ from nltk.tokenize import word_tokenize
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import tempfile
+import base64
 
 # Download NLTK stopwords and punkt
 nltk.download('stopwords')
@@ -19,13 +20,17 @@ st.set_page_config(page_title='Sentiment Analysis App')
 # Title
 st.title('Sentiment Analysis App')
 
-def get_sentiment(compound):
-  if compound >= 0.5:
-    return 'Positive'
-  elif compound <= -0.5:
-    return 'Negative'
-  else:
-    return 'Neutral'
+def classify_sentiment(compound):
+    if compound >= 0.5:
+        return "Highly Positive"
+    elif 0 < compound < 0.5:
+        return "Slightly Positive"
+    elif compound == 0:
+        return "Neutral"
+    elif -0.5 < compound < 0:
+        return "Slightly Negative"
+    else:
+        return "Highly Negative"
 
 def generate_wordcloud(text):
   stopwords_set = set(stopwords.words('english'))
@@ -51,17 +56,31 @@ if uploaded_file:
   for text in df[column]:
     text = str(text) # Convert to string
     scores = analyzer.polarity_scores(text)
-    sentiment = get_sentiment(scores['compound'])
+    sentiment = classify_sentiment(scores['compound'])
+    
+    # POS tagging
+    tagged = nltk.pos_tag(word_tokenize(text))
+    adjectives = [word for word, tag in tagged if tag.startswith('JJ')]
+    verbs = [word for word, tag in tagged if tag.startswith('VB')]
+    proper_nouns = [word for word, tag in tagged if tag == 'NNP' or tag == 'NNPS']
+    common_nouns = [word for word, tag in tagged if tag == 'NN' or tag == 'NNS']
     
     data = {
       'Response': text,
       'Sentiment': sentiment,
+      'Adjectives': ', '.join(adjectives),
+      'Verbs': ', '.join(verbs),
+      'Proper Nouns': ', '.join(proper_nouns),
+      'Common Nouns': ', '.join(common_nouns),
       'Compound': scores['compound']
     }
     results.append(data)
 
+  # Create a DataFrame from the results
+  result_df = pd.DataFrame(results)
+
   # Display results
-  st.dataframe(pd.DataFrame(results))
+  st.dataframe(result_df)
 
   # Generate wordcloud
   texts = ' '.join(df[column].astype(str))
@@ -73,24 +92,12 @@ if uploaded_file:
 
   # Display the saved image
   st.image(temp_file.name)
-
-  # POS tagging
-  pos_selection = st.selectbox("Select Part of Speech", ["Proper Nouns", "Common Nouns", "Verbs", "Adjectives"])
   
-  tagged = nltk.pos_tag(word_tokenize(texts))
-  
-  if pos_selection == "Proper Nouns":
-      pos_words = [word for word, tag in tagged if tag == 'NNP' or tag == 'NNPS']
-  elif pos_selection == "Common Nouns":
-      pos_words = [word for word, tag in tagged if tag == 'NN' or tag == 'NNS']
-  elif pos_selection == "Verbs":
-      pos_words = [word for word, tag in tagged if tag.startswith('VB')]
-  elif pos_selection == "Adjectives":
-      pos_words = [word for word, tag in tagged if tag.startswith('JJ')]
-  else:
-      pos_words = []
-
-  st.write(f'Selected {pos_selection}:', ', '.join(pos_words))
+  # Download the results as a CSV file
+  csv_file = result_df.to_csv(index=False)
+  b64 = base64.b64encode(csv_file.encode()).decode()  # Convert to base64
+  href = f'<a href="data:file/csv;base64,{b64}" download="sentiment_analysis_results.csv">Download CSV</a>'
+  st.markdown(href, unsafe_allow_html=True)
   
 else:
   st.info('Upload a CSV file')
@@ -100,11 +107,13 @@ st.sidebar.header('About')
 st.sidebar.markdown("""
 This is a Sentiment Analysis web app created with Streamlit. It allows you to upload a CSV file, perform sentiment analysis on the text data, generate a word cloud, and identify different parts of speech in the text.
 
-**Sentiment Analysis:** The app uses VADER Sentiment Analysis to classify the sentiment of each response as Positive, Negative, or Neutral.
+**Sentiment Analysis:** The app classifies sentiment using the provided scale - Highly Positive, Slightly Positive, Neutral, Slightly Negative, and Highly Negative.
 
 **Word Cloud:** A word cloud is generated to visualize the most frequent words in the text.
 
-**Part of Speech:** You can select from Proper Nouns, Common Nouns, Verbs, and Adjectives to identify specific parts of speech in the text.
+**Part of Speech:** Adjectives, Verbs, Proper Nouns, and Common Nouns are identified and displayed for each response in the table.
+
+**Download CSV:** You can download the analysis results as a CSV file.
 
 Enjoy exploring your text data with this interactive app!
 """)
