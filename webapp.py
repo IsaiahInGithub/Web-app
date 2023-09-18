@@ -71,7 +71,7 @@ if uploaded_file:
       wc.to_file(temp_file.name)
 
   # Display the saved image
-  st.image(temp_file.name, use_container_width=True)
+  st.image(temp_file.name)
 
   # POS tagging
   tagged = nltk.pos_tag(word_tokenize(str(texts)))
