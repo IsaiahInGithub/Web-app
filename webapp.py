@@ -61,7 +61,7 @@ if uploaded_file:
 
     # Sentiment analysis and display
     st.subheader('Sentiment Analysis')
-    sentiment_scores = df[column].apply(lambda x: analyzer.polarity_scores(x))
+    sentiment_scores = df[column].apply(lambda x: analyzer.polarity_scores(str(x)))
     df['Sentiment'] = sentiment_scores.apply(lambda x: 'Highly Positive' if x['compound'] >= 0.5
                                             else 'Slightly Positive' if 0.5 > x['compound'] > 0
                                             else 'Neutral' if x['compound'] == 0
