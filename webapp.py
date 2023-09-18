@@ -62,9 +62,14 @@ if uploaded_file:
   st.dataframe(pd.DataFrame(results))
 
   # Generate wordcloud
-  texts = ' '.join(df[column].astype(str)) 
+  texts = ' '.join(df[column].astype(str))
   wc = generate_wordcloud(texts)
-  st.image(wc.to_array(), use_container_width=True)
+
+  # Convert WordCloud to PNG image
+  img = wc.to_image()
+
+  # Display the PNG image
+  st.image(img, use_container_width=True)
 
   # POS tagging
   tagged = nltk.pos_tag(word_tokenize(str(texts)))
