@@ -1,134 +1,128 @@
 import streamlit as st
 import pandas as pd
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import nltk
-from nltk.corpus import stopwords
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from wordcloud import WordCloud
-from sklearn.cluster import KMeans
-from sklearn.feature_extraction.text import TfidfVectorizer
 import spacy
-
-# Download NLTK stopwords
-nltk.download('stopwords')
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+import base64
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
 # Page config
-st.set_page_config(page_title='Sentiment Analysis & Clustering App')
+st.set_page_config(page_title='Text Analysis App')
 
 # Title
-st.title('Sentiment Analysis & Clustering App')
+st.title('Text Analysis App')
 
-# Load SpaCy model
-nlp = spacy.load("en_core_web_sm")
+# About section
+st.sidebar.subheader('About')
+st.sidebar.write(
+    """
+    This is a Text Analysis Web App that performs various text analysis tasks on your data.
+    You can upload a CSV file, select a column, and analyze the text within it.
+    The following tasks are available:
 
-# Function to classify sentiment
-def classify_sentiment(compound):
-    if compound >= 0.5:
-        return "Highly Positive"
-    elif compound >= 0:
-        return "Positive"
-    elif compound == 0:
-        return "Neutral"
-    elif compound > -0.5:
-        return "Negative"
-    else:
-        return "Highly Negative"
+    - **Sentiment Analysis**: Determine the sentiment of the text.
+    - **Word Cloud**: Visualize the most frequent words in the text.
+    - **Part-of-Speech Tagging**: Identify adjectives, verbs, proper nouns, and common nouns.
+    - **Clustering**: Perform K-Means clustering on the text data to find common themes.
 
-# Function to generate a WordCloud
-def generate_wordcloud(text):
-    stopwords_set = set(stopwords.words('english'))
-    wc = WordCloud(width=600, height=400, stopwords=stopwords_set).generate(text)
-    return wc
-
-# Function to process text and perform analysis
-def process_text(text):
-    if isinstance(text, str):  # Ensure text is a string
-        scores = analyzer.polarity_scores(text)
-        sentiment = classify_sentiment(scores['compound'])
-        doc = nlp(text)
-        adjectives = []
-        verbs = []
-        proper_nouns = []
-        common_nouns = []
-
-        for token in doc:
-            if token.pos_ == 'ADJ':
-                adjectives.append(token.text)
-            elif token.pos_ == 'VERB':
-                verbs.append(token.text)
-            elif token.pos_ == 'PROPN':
-                proper_nouns.append(token.text)
-            elif token.pos_ == 'NOUN':
-                common_nouns.append(token.text)
-
-        return sentiment, ', '.join(adjectives), ', '.join(verbs), ', '.join(proper_nouns), ', '.join(common_nouns)
-    else:
-        return None, None, None, None, None
+    You can also download the clustered data as a CSV file.
+    """
+)
 
 # File upload
-uploaded_file = st.file_uploader('Choose a CSV file', type='csv')
+uploaded_file = st.file_uploader('Choose a CSV file', type=['csv'])
 
 if uploaded_file:
-
     # Load dataframe
     df = pd.read_csv(uploaded_file)
 
     # Column selection
     column = st.selectbox('Select column', df.columns)
 
-    # Allow user to add custom stopwords
-    custom_stopwords = st.text_area("Add Custom Stopwords (comma-separated)", "")
-    custom_stopwords = [word.strip() for word in custom_stopwords.split(',') if word.strip()]
-
-    # Initialize sentiment analyzer
+    # Initialize analyzer
     analyzer = SentimentIntensityAnalyzer()
 
-    # Initialize variables for clustering
-    num_clusters = st.slider("Number of Clusters", 2, 10)
-    tfidf_vectorizer = TfidfVectorizer(
-        max_df=0.9,
-        max_features=5000,
-        stop_words=stopwords.words('english') + custom_stopwords,
-        lowercase=False  # Prevent text from being converted to lowercase
-    )
+    # Initialize Spacy for part-of-speech tagging
+    nlp = spacy.load("en_core_web_sm")
 
-    # Custom tokenizer to better handle tokenization
-    def custom_tokenizer(text):
-        return text.split()
+    # Text preprocessing
+    def preprocess_text(text):
+        # Tokenize and remove stopwords
+        tokens = word_tokenize(text)
+        tokens = [word for word in tokens if word.lower() not in stopwords.words('english')]
+        return ' '.join(tokens)
 
-    tfidf_vectorizer.set_params(tokenizer=custom_tokenizer)
-    tfidf_matrix = tfidf_vectorizer.fit_transform(df[column])
-    kmeans = KMeans(n_clusters=num_clusters, random_state=42).fit(tfidf_matrix)
-    df['Cluster'] = kmeans.labels_
+    df[column] = df[column].apply(preprocess_text)
 
-    # Initialize variables for sentiment analysis
-    sentiment_results = []
+    # Sentiment analysis and display
+    st.subheader('Sentiment Analysis')
+    sentiment_scores = df[column].apply(lambda x: analyzer.polarity_scores(x))
+    df['Sentiment'] = sentiment_scores.apply(lambda x: 'Highly Positive' if x['compound'] >= 0.5
+                                            else 'Slightly Positive' if 0.5 > x['compound'] > 0
+                                            else 'Neutral' if x['compound'] == 0
+                                            else 'Slightly Negative' if 0 > x['compound'] >= -0.5
+                                            else 'Highly Negative')
 
-    # Initialize dictionary to store cluster keywords
-    cluster_keywords = {}
+    st.write(df[[column, 'Sentiment']])
 
-    # Iterate through data
-    for index, row in df.iterrows():
-        text = row[column]
-        sentiment, adjectives, verbs, proper_nouns, common_nouns = process_text(text)
-        sentiment_results.append({
-            'Response': text,
-            'Sentiment': sentiment,
-            'Adjectives': adjectives,
-            'Verbs': verbs,
-            'Proper Nouns': proper_nouns,
-            'Common Nouns': common_nouns,
-            'Compound': analyzer.polarity_scores(text)['compound'],
-            'Cluster': row['Cluster']
-        })
+    # Word Cloud
+    st.subheader('Word Cloud')
+    texts = ' '.join(df[column].astype(str))
+    wc = WordCloud(width=600, height=400, stopwords=stopwords.words('english')).generate(texts)
+    st.image(wc.to_array(), use_container_width=True)
 
-        # Update cluster keywords
-        cluster_id = row['Cluster']
-        if cluster_id not in cluster_keywords:
-            cluster_keywords[cluster_id] = []
-        cluster_keywords[cluster_id].extend(text.split())
+    # Part-of-Speech Tagging
+    st.subheader('Part-of-Speech Tagging')
+    pos_option = st.selectbox('Select part-of-speech', ['Adjectives', 'Verbs', 'Proper Nouns', 'Common Nouns'])
+    doc = ' '.join(df[column].astype(str))
+    doc = nlp(doc)
+    
+    pos_map = {
+        'Adjectives': 'ADJ',
+        'Verbs': 'VERB',
+        'Proper Nouns': 'PROPN',
+        'Common Nouns': 'NOUN'
+    }
 
-    # Create a DataFrame from the results
-    sentiment_df = pd.DataFrame(sentiment_results)
+    if pos_option in pos_map:
+        pos_tag = pos_map[pos_option]
+        tagged_words = [token.text for token in doc if token.pos_ == pos_tag]
+        st.write(f'{pos_option}:', ', '.join(tagged_words))
 
-    # Display clustering results with cluster keywords
-    st.write("### Clustering Results")
+    # TF-IDF Vectorization and K-Means Clustering
+    st.subheader('Clustering')
+    num_clusters = st.number_input('Number of Clusters', min_value=2, max_value=10, value=2)
+    cluster_button = st.button('Cluster Text Data')
+
+    if cluster_button:
+        # TF-IDF Vectorization
+        tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_df=0.85, min_df=0.05)
+        tfidf_matrix = tfidf_vectorizer.fit_transform(df[column])
+
+        # K-Means Clustering
+        kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+        df['Cluster'] = kmeans.fit_predict(tfidf_matrix)
+
+        # Display clusters and keywords
+        cluster_keywords = {}
+        for cluster_id in range(num_clusters):
+            cluster_data = df[df['Cluster'] == cluster_id]
+            texts = ' '.join(cluster_data[column].astype(str))
+            wc = WordCloud(width=200, height=200, stopwords=stopwords.words('english')).generate(texts)
+            cluster_keywords[cluster_id] = ', '.join(wc.words_.keys()[:10])
+
+            st.subheader(f'Cluster {cluster_id}')
+            st.image(wc.to_array(), use_container_width=True)
+            st.write('Keywords:', cluster_keywords[cluster_id])
+
+        # Download clusters as CSV
+        cluster_df = df[[column, 'Cluster']]
+        csv_filename = f'clustered_data_{column}_sentiment.csv'
+        csv_data = cluster_df.to_csv(index=False, encoding='utf-8')
+        b64 = base64.b64encode(csv_data.encode()).decode()
+        st.markdown("### Download Clustered Data")
+        st.markdown(f"You can download the clustered data as a CSV file: [Download CSV](data:application/octet-stream;base64,{b64})")
