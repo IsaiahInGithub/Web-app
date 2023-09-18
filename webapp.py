@@ -8,6 +8,8 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import tempfile
 import base64
+from sklearn.cluster import KMeans
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Download NLTK stopwords and punkt
 nltk.download('stopwords')
@@ -96,9 +98,22 @@ if uploaded_file:
   # Download the results as a CSV file
   csv_file = result_df.to_csv(index=False)
   b64 = base64.b64encode(csv_file.encode()).decode()  # Convert to base64
-  href = f'<a href="data:file/csv;base64,{b64}" download="sentiment_analysis_results.csv">Download CSV</a>'
+  filename = f"{uploaded_file.name.split('.')[0]}_Sentiment_Analysis.csv"
+  href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV</a>'
   st.markdown(href, unsafe_allow_html=True)
-  
+
+  # Perform K-Means clustering
+  num_clusters = st.slider("Number of Clusters", 2, 10)
+  tfidf_vectorizer = TfidfVectorizer(max_df=0.9, max_features=5000)
+  tfidf_matrix = tfidf_vectorizer.fit_transform(result_df['Response'])
+  kmeans = KMeans(n_clusters=num_clusters, random_state=42).fit(tfidf_matrix)
+  result_df['Cluster'] = kmeans.labels_
+
+  # Display clustering results
+  st.write("### Clustering Results")
+  st.write(result_df.groupby('Cluster').size())
+  st.bar_chart(result_df['Cluster'].value_counts() / len(result_df) * 100)
+
 else:
   st.info('Upload a CSV file')
 
@@ -113,7 +128,9 @@ This is a Sentiment Analysis web app created with Streamlit. It allows you to up
 
 **Part of Speech:** Adjectives, Verbs, Proper Nouns, and Common Nouns are identified and displayed for each response in the table.
 
-**Download CSV:** You can download the analysis results as a CSV file.
+**Clustering:** K-Means clustering is performed to identify main themes in the data, and the percentage of data points in each cluster is displayed.
+
+**Download CSV:** You can download the analysis results as a CSV file with the same name as the uploaded file, followed by "_Sentiment Analysis".
 
 Enjoy exploring your text data with this interactive app!
 """)
