@@ -74,7 +74,7 @@ if uploaded_file:
   st.image(temp_file.name)
 
   # POS tagging
-  tagged = nltk.pos_tag(word_tokenize(str(texts)))
+  tagged = nltk.pos_tag(word_tokenize(texts))
   adjectives = get_adjectives(tagged)
   nouns = get_nouns(tagged)
 
