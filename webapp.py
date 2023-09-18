@@ -73,7 +73,7 @@ if uploaded_file:
     # Word Cloud
     st.subheader('Word Cloud')
     texts = ' '.join(df[column].astype(str))
-    if len(texts) > 0:
+    if len(texts) > 0 and texts.strip():
         wc = WordCloud(width=600, height=400, stopwords=stopwords.words('english')).generate(texts)
         st.image(wc.to_array(), use_container_width=True)
     else:
