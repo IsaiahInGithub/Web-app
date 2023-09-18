@@ -52,8 +52,11 @@ if uploaded_file:
     # Column selection
     column = st.selectbox('Select column', df.columns)
 
+    # Convert the selected column to string
+    df[column] = df[column].astype(str)
+
     # Allow user to add custom stopwords
-    custom_stopwords = st.text_area("Custom Stopwords (comma-separated)", "")
+    custom_stopwords = st.text_area("Add Custom Stopwords (comma-separated)", "")
     custom_stopwords = [word.strip() for word in custom_stopwords.split(',') if word.strip()]
 
     # Initialize sentiment analyzer
@@ -73,7 +76,6 @@ if uploaded_file:
     # Iterate through data
     for index, row in df.iterrows():
         text = row[column]
-        text = str(text)  # Convert to string
         scores = analyzer.polarity_scores(text)
         sentiment = classify_sentiment(scores['compound'])
 
@@ -119,7 +121,7 @@ if uploaded_file:
     st.dataframe(sentiment_df)
 
     # Generate word cloud
-    texts = ' '.join(df[column].astype(str))
+    texts = ' '.join(df[column])
     wc = generate_wordcloud(texts)
 
     # Save WordCloud image to a temporary file with a known extension (e.g., PNG)
