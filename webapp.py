@@ -73,5 +73,8 @@ if uploaded_file:
     # Word Cloud
     st.subheader('Word Cloud')
     texts = ' '.join(df[column].astype(str))
-    wc = WordCloud(width=600, height=400, stopwords=stopwords.words('english')).generate(texts)
-    st.image(wc.to_array(), use_container_width=True)
+    if len(texts) > 0:
+        wc = WordCloud(width=600, height=400, stopwords=stopwords.words('english')).generate(texts)
+        st.image(wc.to_array(), use_container_width=True)
+    else:
+        st.info("No text available for generating the Word Cloud.")
