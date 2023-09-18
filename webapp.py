@@ -137,7 +137,3 @@ st.sidebar.markdown(
     Enjoy exploring your text data with this interactive app!
     """
 )
-
-**Word Cloud:** A word cloud is generated to visualize the most frequent words in the text.
-
-**Part of Speech:** Adjectives, Verbs, Proper Nouns, and Common
