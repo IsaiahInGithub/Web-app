@@ -77,6 +77,12 @@ if uploaded_file:
         stop_words=stopwords.words('english') + custom_stopwords,
         lowercase=False  # Prevent text from being converted to lowercase
     )
+
+    # Custom tokenizer to better handle tokenization
+    def custom_tokenizer(text):
+        return word_tokenize(text)
+
+    tfidf_vectorizer.set_params(tokenizer=custom_tokenizer)
     tfidf_matrix = tfidf_vectorizer.fit_transform(df[column])
     kmeans = KMeans(n_clusters=num_clusters, random_state=42).fit(tfidf_matrix)
     df['Cluster'] = kmeans.labels_
