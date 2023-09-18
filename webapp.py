@@ -7,6 +7,10 @@ from nltk.tokenize import word_tokenize
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
+# Download NLTK stopwords
+nltk.download('stopwords')
+nltk.download('punkt')
+
 # Page config
 st.set_page_config(page_title='Sentiment Analysis App')
 
@@ -22,8 +26,8 @@ def get_sentiment(compound):
     return 'Neutral'
 
 def generate_wordcloud(text):
-  stopwords = nltk.corpus.stopwords.words('english')
-  wc = WordCloud(width=600, height=400, stopwords=stopwords).generate(text)
+  stopwords_set = set(stopwords.words('english'))
+  wc = WordCloud(width=600, height=400, stopwords=stopwords_set).generate(text)
   return wc
 
 # File upload
@@ -55,12 +59,12 @@ if uploaded_file:
     results.append(data)
 
   # Display results
-  st.dataframe(results)
+  st.dataframe(pd.DataFrame(results))
 
   # Generate wordcloud
   texts = ' '.join(df[column].astype(str)) 
   wc = generate_wordcloud(texts)
-  st.pyplot(wc)
+  st.image(wc.to_array(), use_container_width=True)
 
   # POS tagging
   tagged = nltk.pos_tag(word_tokenize(str(texts)))
