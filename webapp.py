@@ -17,6 +17,7 @@ nltk.download('vader_lexicon')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('omw-1.4')
+nltk.download('punkt')
 
 # Header 
 st.title('Sentiment Analysis App :sunglasses:')
