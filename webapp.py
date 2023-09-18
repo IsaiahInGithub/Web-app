@@ -6,7 +6,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-import io
+import tempfile
 
 # Download NLTK stopwords
 nltk.download('stopwords')
@@ -66,13 +66,12 @@ if uploaded_file:
   texts = ' '.join(df[column].astype(str))
   wc = generate_wordcloud(texts)
 
-  # Save WordCloud image to a file-like object
-  img_buffer = io.BytesIO()
-  wc.to_file(img_buffer)
-  img_buffer.seek(0)
+  # Save WordCloud image to a temporary file
+  with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+      wc.to_file(temp_file.name)
 
   # Display the saved image
-  st.image(img_buffer, use_container_width=True)
+  st.image(temp_file.name, use_container_width=True)
 
   # POS tagging
   tagged = nltk.pos_tag(word_tokenize(str(texts)))
