@@ -8,16 +8,10 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import tempfile
 
-# Download NLTK stopwords
+# Download NLTK stopwords and punkt
 nltk.download('stopwords')
 nltk.download('punkt')
-
-# Define the get_adjectives and get_nouns functions before they are called
-def get_adjectives(tagged):
-  return [word for word, tag in tagged if tag.startswith('JJ')]
-
-def get_nouns(tagged):
-  return [word for word, tag in tagged if tag.startswith('NN')]
+nltk.download('averaged_perceptron_tagger')
 
 # Page config
 st.set_page_config(page_title='Sentiment Analysis App')
@@ -81,16 +75,36 @@ if uploaded_file:
   st.image(temp_file.name)
 
   # POS tagging
+  pos_selection = st.selectbox("Select Part of Speech", ["Proper Nouns", "Common Nouns", "Verbs", "Adjectives"])
+  
   tagged = nltk.pos_tag(word_tokenize(texts))
-  adjectives = get_adjectives(tagged)
-  nouns = get_nouns(tagged)
+  
+  if pos_selection == "Proper Nouns":
+      pos_words = [word for word, tag in tagged if tag == 'NNP' or tag == 'NNPS']
+  elif pos_selection == "Common Nouns":
+      pos_words = [word for word, tag in tagged if tag == 'NN' or tag == 'NNS']
+  elif pos_selection == "Verbs":
+      pos_words = [word for word, tag in tagged if tag.startswith('VB')]
+  elif pos_selection == "Adjectives":
+      pos_words = [word for word, tag in tagged if tag.startswith('JJ')]
+  else:
+      pos_words = []
 
-  st.write('Adjectives:', ', '.join(adjectives))
-  st.write('Nouns:', ', '.join(nouns))
+  st.write(f'Selected {pos_selection}:', ', '.join(pos_words))
   
 else:
   st.info('Upload a CSV file')
 
 # About section
 st.sidebar.header('About')
-st.sidebar.info('Sentiment analysis web app using Streamlit')
+st.sidebar.markdown("""
+This is a Sentiment Analysis web app created with Streamlit. It allows you to upload a CSV file, perform sentiment analysis on the text data, generate a word cloud, and identify different parts of speech in the text.
+
+**Sentiment Analysis:** The app uses VADER Sentiment Analysis to classify the sentiment of each response as Positive, Negative, or Neutral.
+
+**Word Cloud:** A word cloud is generated to visualize the most frequent words in the text.
+
+**Part of Speech:** You can select from Proper Nouns, Common Nouns, Verbs, and Adjectives to identify specific parts of speech in the text.
+
+Enjoy exploring your text data with this interactive app!
+""")
