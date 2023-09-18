@@ -21,6 +21,11 @@ def get_sentiment(compound):
   else:
     return 'Neutral'
 
+def generate_wordcloud(text):
+  stopwords = nltk.corpus.stopwords.words('english')
+  wc = WordCloud(width=600, height=400, stopwords=stopwords).generate(text)
+  return wc
+
 # File upload
 uploaded_file = st.file_uploader('Choose a CSV file', type='csv')
 
@@ -67,11 +72,6 @@ if uploaded_file:
   
 else:
   st.info('Upload a CSV file')
-
-def generate_wordcloud(text):
-  stopwords = nltk.corpus.stopwords.words('english')
-  wc = WordCloud(width=600, height=400, stopwords=stopwords).generate(text)
-  return wc
 
 def get_adjectives(tagged):
   return [word for word, tag in tagged if tag.startswith('JJ')]
