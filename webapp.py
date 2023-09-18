@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import spacy
 from wordcloud import WordCloud, STOPWORDS
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -8,14 +7,22 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
-# Load the spaCy English model
-nlp = spacy.load("en_core_web_sm")
+# Download NLTK data (if not already downloaded)
+nltk.download("punkt")
+nltk.download("stopwords")
 
 # Function to preprocess text
 def preprocess_text(text):
-    doc = nlp(text)
-    tokens = [token.text.lower() for token in doc if not token.is_stop and token.is_alpha]
+    # Tokenize the text
+    tokens = word_tokenize(text)
+
+    # Remove stopwords and non-alphabetic tokens
+    tokens = [word.lower() for word in tokens if word.isalpha() and word.lower() not in stop_words]
+
     return " ".join(tokens)
 
 # Title and About text
@@ -38,6 +45,7 @@ if uploaded_file is not None:
     column = "text"
 
     # Preprocess the text data
+    stop_words = set(stopwords.words("english"))
     df[column] = df[column].apply(preprocess_text)
 
     # Sentiment Analysis
