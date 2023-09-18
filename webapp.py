@@ -126,11 +126,4 @@ This is a Sentiment Analysis web app created with Streamlit. It allows you to up
 
 **Word Cloud:** A word cloud is generated to visualize the most frequent words in the text.
 
-**Part of Speech:** Adjectives, Verbs, Proper Nouns, and Common Nouns are identified and displayed for each response in the table.
-
-**Clustering:** K-Means clustering is performed to identify main themes in the data, and the percentage of data points in each cluster is displayed.
-
-**Download CSV:** You can download the analysis results as a CSV file with the same name as the uploaded file, followed by "_Sentiment Analysis".
-
-Enjoy exploring your text data with this interactive app!
-""")
+**Part of Speech:** Adjectives, Verbs, Proper Nouns, and Common
