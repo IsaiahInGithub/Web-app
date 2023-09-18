@@ -1,84 +1,83 @@
-# Import libraries
 import streamlit as st
-import pandas as pd 
+import pandas as pd
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords  
 from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Page config
-st.set_page_config(page_title='Sentiment Analysis App', page_icon=':smiley:', layout='wide') 
+st.set_page_config(page_title='Sentiment Analysis App')
 
 # Download NLTK data
 nltk.download('vader_lexicon')
 nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('omw-1.4')
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 
-# Header 
-st.title('Sentiment Analysis App :sunglasses:')
+# Title
+st.title('Sentiment Analysis App') 
 
-# Input text 
-user_input = st.text_area("Enter text", height=200, value='Sample input text')
+# File upload
+uploaded_file = st.file_uploader('Choose a CSV file', type=['csv'])
+
+if uploaded_file:
+  df = pd.read_csv(uploaded_file)
+
+  # Show columns as checkboxes to select  
+  cols = st.columns(len(df.columns))
+  selected_column = cols[0].checkbox(df.columns[0], key='col0')
+
+  for i, col in enumerate(df.columns[1:]):
+    selected = cols[i+1].checkbox(col, key=f'col{i+1}')
+    if selected:
+      selected_column = col  
+      
+  if selected_column:
+    user_input = df[selected_column]
+  else:
+    st.error('Please select a column')
+    
+else:
+  # Text input
+  user_input = st.text_area('Enter text') 
 
 # VADER initialization
 analyzer = SentimentIntensityAnalyzer()
 
-# Sentiment analysis function
+# Sentiment analysis function  
 def analyze_sentiment(text):
-  scores = analyzer.polarity_scores(text)
-  compound = scores['compound']
-  
-  if compound >= 0.5:
+  score = analyzer.polarity_scores(text)['compound']
+  if score >= 0.05:
     return 'Positive'
-  elif compound <= -0.5:
+  elif score <= -0.05:
     return 'Negative'
   else:
     return 'Neutral'
-
+    
 # Wordcloud function
 def generate_wordcloud(text):
-    stopwords_list = stopwords.words('english')
-    wordcloud = WordCloud(width=600, height=400, stopwords=stopwords_list).generate(text)
-
-    fig, ax = plt.subplots(figsize=(10,8))
-    ax.imshow(wordcloud)
-    ax.axis('off')
-
-    return fig
-
-# Parts of speech function
-def pos_tag_text(text):
-    tokens = word_tokenize(text)
-    tagged = nltk.pos_tag(tokens)  
-    adjectives = [word for word, tag in tagged if tag.startswith('JJ')]
-    nouns = [word for word, tag in tagged if tag.startswith('NN')]
-    
-    return adjectives, nouns
+  stopwords_list = stopwords.words('english')
+  wordcloud = WordCloud(width=600, height=400, stopwords=stopwords_list).generate(text)
+  fig, ax = plt.subplots(figsize=(10,8))
+  ax.imshow(wordcloud)
+  ax.axis('off')
+  return fig
 
 if st.button('Analyze Sentiment'):
-    if user_input:
-        sentiment = analyze_sentiment(user_input)
-        st.success(f'Sentiment: {sentiment}')
-    else:
-        st.warning('Please enter text for analysis')
-        
+  if user_input is not None:
+    sentiment = analyze_sentiment(str(user_input))
+    st.success(f'Sentiment: {sentiment}')
+  else:
+    st.warning('Please upload file or enter text')
+    
 if st.button('Generate Word Cloud'):
-    if user_input:
-        fig = generate_wordcloud(user_input)
-        st.pyplot(fig)
-    else:
-        st.warning('Please enter text for word cloud')
-
-adjectives, nouns = pos_tag_text(user_input)
-st.write('Extracted Adjectives:', ', '.join(adjectives))
-st.write('Extracted Nouns:', ', '.join(nouns))
-
-# Sidebar
+  if user_input is not None:
+    fig = generate_wordcloud(str(user_input))
+    st.pyplot(fig)
+  else:
+    st.warning('Please upload file or enter text')
+    
 st.sidebar.header('About')
-st.sidebar.info('This app performs sentiment analysis using VADER and also generates wordclouds and extracts parts of speech from input text.')
+st.sidebar.info('Sentiment analysis app using Streamlit')
