@@ -1,80 +1,115 @@
 import streamlit as st
 import pandas as pd
-import nltk
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from wordcloud import WordCloud
-import spacy
+import numpy as np
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud, STOPWORDS
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-import base64
+from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize, sent_tokenize
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import spacy
+import plotly.express as px
 
-# Page config
-st.set_page_config(page_title='Text Analysis App')
+# Load spaCy model
+nlp = spacy.load("en_core_web_sm")
 
-# Title
-st.title('Text Analysis App')
+# Function to preprocess text data
+def preprocess_text(text):
+    doc = nlp(text)
+    tokens = [token.text.lower() for token in doc if not token.is_stop and token.is_alpha]
+    return " ".join(tokens)
 
-# About section
-st.sidebar.subheader('About')
-st.sidebar.markdown("""
-    This is a Text Analysis Web App that performs various text analysis tasks on your data.
-    You can upload a CSV file, select a column, and analyze the text within it.
-    The following tasks are available:
-
-    - **Sentiment Analysis**: Determine the sentiment of the text.
-    - **Word Cloud**: Visualize the most frequent words in the text.
-    - **Part-of-Speech Tagging**: Identify adjectives, verbs, proper nouns, and common nouns.
-    - **Clustering**: Perform K-Means clustering on the text data to find common themes.
-
-    You can also download the clustered data as a CSV file.
-    """)
-
-# File upload
-uploaded_file = st.file_uploader('Choose a CSV file', type=['csv'])
-
-if uploaded_file:
-    # Load dataframe
-    df = pd.read_csv(uploaded_file)
-
-    # Column selection
-    column = st.selectbox('Select column', df.columns)
-
-    # Initialize analyzer
+# Function to get sentiment analysis
+def get_sentiment(text):
     analyzer = SentimentIntensityAnalyzer()
-
-    # Initialize Spacy for part-of-speech tagging
-    nlp = spacy.load("en_core_web_sm")
-
-    # Text preprocessing
-    def preprocess_text(text):
-        try:
-            # Tokenize and remove stopwords
-            tokens = word_tokenize(text)
-            tokens = [word for word in tokens if word.lower() not in stopwords.words('english')]
-            return ' '.join(tokens)
-        except Exception as e:
-            return text
-
-    df[column] = df[column].apply(preprocess_text)
-
-    # Sentiment analysis and display
-    st.subheader('Sentiment Analysis')
-    sentiment_scores = df[column].apply(lambda x: analyzer.polarity_scores(str(x)))
-    df['Sentiment'] = sentiment_scores.apply(lambda x: 'Highly Positive' if x['compound'] >= 0.5
-                                            else 'Slightly Positive' if 0.5 > x['compound'] > 0
-                                            else 'Neutral' if x['compound'] == 0
-                                            else 'Slightly Negative' if 0 > x['compound'] >= -0.5
-                                            else 'Highly Negative')
-
-    st.write(df[[column, 'Sentiment']])
-
-    # Word Cloud
-    st.subheader('Word Cloud')
-    texts = ' '.join(df[column].astype(str))
-    if len(texts) > 0 and texts.strip():
-        wc = WordCloud(width=600, height=400, stopwords=stopwords.words('english')).generate(texts)
-        st.image(wc.to_array(), use_container_width=True)
+    sentiment_scores = analyzer.polarity_scores(text)
+    if sentiment_scores['compound'] >= 0.5:
+        return "Highly Positive"
+    elif 0.5 > sentiment_scores['compound'] > 0:
+        return "Slightly Positive"
+    elif sentiment_scores['compound'] == 0:
+        return "Neutral"
+    elif 0 > sentiment_scores['compound'] >= -0.5:
+        return "Slightly Negative"
     else:
-        st.info("No text available for generating the Word Cloud.")
+        return "Highly Negative"
+
+# Main Streamlit app
+def main():
+    st.title("Text Analysis Dashboard")
+    
+    # Upload a CSV file
+    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+    
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+        st.dataframe(df.head())
+
+        # Sidebar with options
+        st.sidebar.subheader("Text Analysis Options")
+        
+        # Dropdown for column selection
+        column = st.sidebar.selectbox("Select a column for analysis", df.columns)
+        
+        # Check for empty dataframe or column
+        if df.empty or df[column].dropna().empty:
+            st.warning("Selected column is empty. Please choose another column.")
+            return
+        
+        # Check if column contains text data
+        if not np.issubdtype(df[column].dtype, np.number):
+            df[column] = df[column].astype(str)
+            df[column] = df[column].apply(preprocess_text)
+
+            st.subheader("Sentiment Analysis")
+            df['Sentiment'] = df[column].apply(get_sentiment)
+            sentiment_counts = df['Sentiment'].value_counts()
+            st.write(sentiment_counts)
+            
+            # Plot sentiment analysis results
+            st.subheader("Sentiment Analysis Visualization")
+            fig_sentiment = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index)
+            st.plotly_chart(fig_sentiment, use_container_width=True)
+
+            # Word Cloud
+            st.subheader('Word Cloud')
+            texts = ' '.join(df[column])
+            if len(texts) > 0 and texts.strip():
+                wc = WordCloud(width=600, height=400, stopwords=stopwords.words('english')).generate(texts)
+                st.image(wc.to_array(), use_container_width=True)
+            else:
+                st.info("No text available for generating the Word Cloud.")
+            
+            # K-means Clustering
+            st.subheader("K-means Clustering")
+            num_clusters = st.sidebar.slider("Select the number of clusters", 2, 10)
+            
+            tfidf_vectorizer = TfidfVectorizer(max_df=0.8, max_features=1000)
+            tfidf_matrix = tfidf_vectorizer.fit_transform(df[column])
+            
+            kmeans = KMeans(n_clusters=num_clusters, random_state=42).fit(tfidf_matrix)
+            df['Cluster'] = kmeans.labels_
+            
+            st.write(df.groupby('Cluster').size())
+            
+            # Plot clusters
+            st.subheader("K-means Clustering Visualization")
+            scatter_plot = px.scatter(df, x="Cluster", color="Cluster", title="K-means Clustering")
+            st.plotly_chart(scatter_plot, use_container_width=True)
+
+            # Keywords in each cluster
+            st.subheader("Keywords in Each Cluster")
+            cluster_keywords = {}
+            for cluster_id in range(num_clusters):
+                cluster_keywords[cluster_id] = ', '.join(df[df['Cluster'] == cluster_id].head(10)[column])
+                st.write(f"Cluster {cluster_id}: {cluster_keywords[cluster_id]}")
+
+            # Download CSV
+            st.subheader("Download Results")
+            st.write("Download the analyzed data as a CSV file:")
+            download_link = st.download_button(label="Download CSV", data=df.to_csv(), key='text_analysis')
+            st.markdown(download_link, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
