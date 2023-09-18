@@ -71,13 +71,21 @@ if uploaded_file:
 
     # Initialize variables for clustering
     num_clusters = st.slider("Number of Clusters", 2, 10)
-    tfidf_vectorizer = TfidfVectorizer(max_df=0.9, max_features=5000, stop_words=stopwords.words('english') + custom_stopwords)
+    tfidf_vectorizer = TfidfVectorizer(
+        max_df=0.9,
+        max_features=5000,
+        stop_words=stopwords.words('english') + custom_stopwords,
+        lowercase=False  # Prevent text from being converted to lowercase
+    )
     tfidf_matrix = tfidf_vectorizer.fit_transform(df[column])
     kmeans = KMeans(n_clusters=num_clusters, random_state=42).fit(tfidf_matrix)
     df['Cluster'] = kmeans.labels_
 
     # Initialize variables for sentiment analysis
     sentiment_results = []
+
+    # Initialize dictionary to store cluster keywords
+    cluster_keywords = {}
 
     # Iterate through data
     for index, row in df.iterrows():
@@ -94,13 +102,23 @@ if uploaded_file:
             'Cluster': row['Cluster']
         })
 
+        # Update cluster keywords
+        cluster_id = row['Cluster']
+        if cluster_id not in cluster_keywords:
+            cluster_keywords[cluster_id] = []
+        cluster_keywords[cluster_id].extend(word_tokenize(text))
+
     # Create a DataFrame from the results
     sentiment_df = pd.DataFrame(sentiment_results)
 
-    # Display clustering results
-    cluster_counts = df.groupby('Cluster').size()
+    # Display clustering results with cluster keywords
     st.write("### Clustering Results")
+    cluster_counts = df.groupby('Cluster').size()
     st.write(cluster_counts)
+
+    st.write("### Keywords in Each Cluster")
+    for cluster_id, keywords in cluster_keywords.items():
+        st.write(f"Cluster {cluster_id} Keywords:", ', '.join(keywords[:10]))
 
     # Display the sentiment analysis table
     st.write("### Sentiment Analysis Results")
@@ -119,8 +137,8 @@ if uploaded_file:
 
     # Download the results as a CSV file
     csv_file = sentiment_df.to_csv(index=False)
-    b64 = base64.b64encode(csv_file.encode()).decode()  # Convert to base64
     filename = f"{uploaded_file.name.split('.')[0]}_Sentiment_Analysis.csv"
+    b64 = base64.b64encode(csv_file.encode()).decode()  # Convert to base64
     href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV</a>'
     st.markdown(href, unsafe_allow_html=True)
 
