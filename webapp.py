@@ -102,17 +102,33 @@ if uploaded_file:
   href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV</a>'
   st.markdown(href, unsafe_allow_html=True)
 
+  # Allow user to add custom stopwords
+  custom_stopwords = st.text_area("Custom Stopwords (comma-separated)", "")
+  custom_stopwords = [word.strip() for word in custom_stopwords.split(',') if word.strip()]
+
   # Perform K-Means clustering
   num_clusters = st.slider("Number of Clusters", 2, 10)
-  tfidf_vectorizer = TfidfVectorizer(max_df=0.9, max_features=5000)
+  tfidf_vectorizer = TfidfVectorizer(max_df=0.9, max_features=5000, stop_words=stopwords.words('english') + custom_stopwords)
   tfidf_matrix = tfidf_vectorizer.fit_transform(result_df['Response'])
   kmeans = KMeans(n_clusters=num_clusters, random_state=42).fit(tfidf_matrix)
   result_df['Cluster'] = kmeans.labels_
 
-  # Display clustering results
+  # Display clustering results and keywords
+  cluster_counts = result_df.groupby('Cluster').size()
   st.write("### Clustering Results")
-  st.write(result_df.groupby('Cluster').size())
-  st.bar_chart(result_df['Cluster'].value_counts() / len(result_df) * 100)
+  st.write(cluster_counts)
+
+  cluster_keywords = {}
+  for cluster_id in range(num_clusters):
+      cluster_text = ' '.join(result_df[result_df['Cluster'] == cluster_id]['Response'])
+      cluster_wc = generate_wordcloud(cluster_text)
+      cluster_keywords[cluster_id] = ', '.join(cluster_wc.words_.keys()[:10])
+  
+  st.write("### Keywords in Each Cluster")
+  for cluster_id, keywords in cluster_keywords.items():
+      st.write(f"Cluster {cluster_id}: {keywords}")
+
+  st.bar_chart(cluster_counts / len(result_df) * 100)
 
 else:
   st.info('Upload a CSV file')
@@ -130,7 +146,9 @@ st.sidebar.markdown(
 
     **Part of Speech:** Adjectives, Verbs, Proper Nouns, and Common Nouns are identified and displayed for each response in the table.
 
-    **Clustering:** K-Means clustering is performed to identify main themes in the data, and the percentage of data points in each cluster is displayed.
+    **Custom Stopwords:** You can specify custom stopwords to filter out words during analysis.
+
+    **Clustering:** K-Means clustering is performed to identify main themes in the data, and the percentage of data points in each cluster is displayed along with keywords in each cluster.
 
     **Download CSV:** You can download the analysis results as a CSV file with the same name as the uploaded file, followed by "_Sentiment Analysis".
 
