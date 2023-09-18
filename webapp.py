@@ -13,6 +13,14 @@ st.set_page_config(page_title='Sentiment Analysis App')
 # Title
 st.title('Sentiment Analysis App')
 
+def get_sentiment(compound):
+  if compound >= 0.5:
+    return 'Positive'
+  elif compound <= -0.5:
+    return 'Negative'
+  else:
+    return 'Neutral'
+
 # File upload
 uploaded_file = st.file_uploader('Choose a CSV file', type='csv')
 
@@ -59,15 +67,6 @@ if uploaded_file:
   
 else:
   st.info('Upload a CSV file')
-
-# Helper functions
-def get_sentiment(compound):
-  if compound >= 0.5:
-    return 'Positive'
-  elif compound <= -0.5:
-    return 'Negative'
-  else:
-    return 'Neutral'
 
 def generate_wordcloud(text):
   stopwords = nltk.corpus.stopwords.words('english')
