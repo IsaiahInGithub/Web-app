@@ -66,8 +66,8 @@ if uploaded_file:
   texts = ' '.join(df[column].astype(str))
   wc = generate_wordcloud(texts)
 
-  # Save WordCloud image to a temporary file
-  with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+  # Save WordCloud image to a temporary file with a known extension (e.g., PNG)
+  with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
       wc.to_file(temp_file.name)
 
   # Display the saved image
