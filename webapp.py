@@ -85,27 +85,6 @@ if uploaded_file:
     # Create a DataFrame from the results
     result_df = pd.DataFrame(results)
 
-    # Display results
-    st.dataframe(result_df)
-
-    # Generate wordcloud
-    texts = ' '.join(df[column].astype(str))
-    wc = generate_wordcloud(texts)
-
-    # Save WordCloud image to a temporary file with a known extension (e.g., PNG)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
-        wc.to_file(temp_file.name)
-
-    # Display the saved image
-    st.image(temp_file.name)
-    
-    # Download the results as a CSV file
-    csv_file = result_df.to_csv(index=False)
-    b64 = base64.b64encode(csv_file.encode()).decode()  # Convert to base64
-    filename = f"{uploaded_file.name.split('.')[0]}_Sentiment_Analysis.csv"
-    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV</a>'
-    st.markdown(href, unsafe_allow_html=True)
-
     # Perform K-Means clustering
     num_clusters = st.slider("Number of Clusters", 2, 10)
     tfidf_vectorizer = TfidfVectorizer(max_df=0.9, max_features=5000, stop_words=stopwords.words('english') + custom_stopwords)
@@ -130,6 +109,12 @@ if uploaded_file:
     st.write("### Keywords in Each Cluster")
     for cluster_id, keywords in cluster_keywords.items():
         st.write(f"Cluster {cluster_id}: {keywords}")
+        
+        # Add keywords to the table
+        result_df.loc[result_df['Cluster'] == cluster_id, f'Cluster {cluster_id} Keywords'] = keywords
+
+    # Display the table with keywords
+    st.dataframe(result_df)
 
 else:
     st.info('Upload a CSV file')
