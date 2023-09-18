@@ -5,7 +5,6 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from wordcloud import WordCloud
-import matplotlib.pyplot as plt
 import tempfile
 import base64
 from sklearn.cluster import KMeans
@@ -26,12 +25,12 @@ st.title('Sentiment Analysis & Clustering App')
 def classify_sentiment(compound):
     if compound >= 0.5:
         return "Highly Positive"
-    elif 0 < compound < 0.5:
-        return "Slightly Positive"
+    elif compound >= 0:
+        return "Positive"
     elif compound == 0:
         return "Neutral"
-    elif -0.5 < compound < 0:
-        return "Slightly Negative"
+    elif compound > -0.5:
+        return "Negative"
     else:
         return "Highly Negative"
 
@@ -40,6 +39,17 @@ def generate_wordcloud(text):
     stopwords_set = set(stopwords.words('english'))
     wc = WordCloud(width=600, height=400, stopwords=stopwords_set).generate(text)
     return wc
+
+# Function to process text and perform analysis
+def process_text(text):
+    scores = analyzer.polarity_scores(text)
+    sentiment = classify_sentiment(scores['compound'])
+    tagged = nltk.pos_tag(word_tokenize(text))
+    adjectives = [word for word, tag in tagged if tag.startswith('JJ')]
+    verbs = [word for word, tag in tagged if tag.startswith('VB')]
+    proper_nouns = [word for word, tag in tagged if tag in ('NNP', 'NNPS')]
+    common_nouns = [word for word, tag in tagged if tag in ('NN', 'NNS')]
+    return sentiment, ', '.join(adjectives), ', '.join(verbs), ', '.join(proper_nouns), ', '.join(common_nouns)
 
 # File upload
 uploaded_file = st.file_uploader('Choose a CSV file', type='csv')
@@ -51,9 +61,6 @@ if uploaded_file:
 
     # Column selection
     column = st.selectbox('Select column', df.columns)
-
-    # Convert the selected column to string
-    df[column] = df[column].astype(str)
 
     # Allow user to add custom stopwords
     custom_stopwords = st.text_area("Add Custom Stopwords (comma-separated)", "")
@@ -71,50 +78,29 @@ if uploaded_file:
 
     # Initialize variables for sentiment analysis
     sentiment_results = []
-    cluster_keywords = {}
 
     # Iterate through data
     for index, row in df.iterrows():
         text = row[column]
-        scores = analyzer.polarity_scores(text)
-        sentiment = classify_sentiment(scores['compound'])
-
-        # POS tagging
-        tagged = nltk.pos_tag(word_tokenize(text))
-        adjectives = [word for word, tag in tagged if tag.startswith('JJ')]
-        verbs = [word for word, tag in tagged if tag.startswith('VB')]
-        proper_nouns = [word for word, tag in tagged if tag == 'NNP' or tag == 'NNPS']
-        common_nouns = [word for word, tag in tagged if tag == 'NN' or tag == 'NNS']
-
+        sentiment, adjectives, verbs, proper_nouns, common_nouns = process_text(text)
         sentiment_results.append({
             'Response': text,
             'Sentiment': sentiment,
-            'Adjectives': ', '.join(adjectives),
-            'Verbs': ', '.join(verbs),
-            'Proper Nouns': ', '.join(proper_nouns),
-            'Common Nouns': ', '.join(common_nouns),
-            'Compound': scores['compound'],
+            'Adjectives': adjectives,
+            'Verbs': verbs,
+            'Proper Nouns': proper_nouns,
+            'Common Nouns': common_nouns,
+            'Compound': analyzer.polarity_scores(text)['compound'],
             'Cluster': row['Cluster']
         })
-
-        cluster_text = ' '.join(df[df['Cluster'] == row['Cluster']][column])
-        cluster_wc = generate_wordcloud(cluster_text)
-
-        # Extract keywords from the WordCloud
-        keywords = ', '.join([word for word, _ in cluster_wc.words_.items()][:10])
-        cluster_keywords[row['Cluster']] = keywords
 
     # Create a DataFrame from the results
     sentiment_df = pd.DataFrame(sentiment_results)
 
-    # Display clustering results and keywords
+    # Display clustering results
     cluster_counts = df.groupby('Cluster').size()
     st.write("### Clustering Results")
     st.write(cluster_counts)
-
-    st.write("### Keywords in Each Cluster")
-    for cluster_id, keywords in cluster_keywords.items():
-        st.write(f"Cluster {cluster_id}: {keywords}")
 
     # Display the sentiment analysis table
     st.write("### Sentiment Analysis Results")
@@ -148,7 +134,7 @@ st.sidebar.markdown(
     This is a Sentiment Analysis & Clustering web app created with Streamlit. It allows you to upload a CSV file, 
     perform sentiment analysis on the text data, generate a word cloud, and identify different parts of speech in the text.
 
-    **Sentiment Analysis:** The app classifies sentiment using the provided scale - Highly Positive, Slightly Positive, Neutral, Slightly Negative, and Highly Negative.
+    **Sentiment Analysis:** The app classifies sentiment as Highly Positive, Positive, Neutral, Negative, or Highly Negative.
 
     **Word Cloud:** A word cloud is generated to visualize the most frequent words in the text.
 
@@ -159,7 +145,5 @@ st.sidebar.markdown(
     **Clustering:** K-Means clustering is performed to identify main themes in the data, and the percentage of data points in each cluster is displayed along with keywords in each cluster.
 
     **Download CSV:** You can download the analysis results as a CSV file with the same name as the uploaded file, followed by "_Sentiment Analysis".
-
-    Enjoy exploring your text data with this interactive app!
     """
 )
