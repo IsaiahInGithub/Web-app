@@ -3,7 +3,7 @@ import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import nltk
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize
 from wordcloud import WordCloud
 import tempfile
 import base64
@@ -44,11 +44,19 @@ def generate_wordcloud(text):
 def process_text(text):
     scores = analyzer.polarity_scores(text)
     sentiment = classify_sentiment(scores['compound'])
-    tagged = nltk.pos_tag(word_tokenize(text))
-    adjectives = [word for word, tag in tagged if tag.startswith('JJ')]
-    verbs = [word for word, tag in tagged if tag.startswith('VB')]
-    proper_nouns = [word for word, tag in tagged if tag in ('NNP', 'NNPS')]
-    common_nouns = [word for word, tag in tagged if tag in ('NN', 'NNS')]
+    sentences = sent_tokenize(text)  # Use sent_tokenize for better sentence tokenization
+    adjectives = []
+    verbs = []
+    proper_nouns = []
+    common_nouns = []
+    
+    for sentence in sentences:
+        tagged = nltk.pos_tag(word_tokenize(sentence))
+        adjectives.extend([word for word, tag in tagged if tag.startswith('JJ')])
+        verbs.extend([word for word, tag in tagged if tag.startswith('VB')])
+        proper_nouns.extend([word for word, tag in tagged if tag in ('NNP', 'NNPS')])
+        common_nouns.extend([word for word, tag in tagged if tag in ('NN', 'NNS')])
+    
     return sentiment, ', '.join(adjectives), ', '.join(verbs), ', '.join(proper_nouns), ', '.join(common_nouns)
 
 # File upload
