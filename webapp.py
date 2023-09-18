@@ -12,6 +12,13 @@ import tempfile
 nltk.download('stopwords')
 nltk.download('punkt')
 
+# Define the get_adjectives and get_nouns functions before they are called
+def get_adjectives(tagged):
+  return [word for word, tag in tagged if tag.startswith('JJ')]
+
+def get_nouns(tagged):
+  return [word for word, tag in tagged if tag.startswith('NN')]
+
 # Page config
 st.set_page_config(page_title='Sentiment Analysis App')
 
@@ -84,12 +91,6 @@ if uploaded_file:
 else:
   st.info('Upload a CSV file')
 
-def get_adjectives(tagged):
-  return [word for word, tag in tagged if tag.startswith('JJ')]
-
-def get_nouns(tagged):
-  return [word for word, tag in tagged if tag.startswith('NN')]
-  
 # About section
 st.sidebar.header('About')
 st.sidebar.info('Sentiment analysis web app using Streamlit')
