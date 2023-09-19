@@ -63,6 +63,20 @@ def pos_tag_text(text):
 
     return adjectives, nouns
 
+# Option to enter text
+user_input = st.text_area("Enter text", height=200, value='Sample input text')
+
+if st.button('Analyze Sentiment Text') and user_input:
+    # Perform sentiment analysis on user-provided text
+    st.subheader('Sentiment Analysis Result:')
+    sentiment = analyze_sentiment(user_input)
+    st.write(f'Sentiment: {sentiment}')
+
+if st.button('Generate Word Cloud Text') and user_input:
+    # Generate word cloud from user-provided text
+    fig = generate_wordcloud(user_input)
+    st.pyplot(fig)
+
 if uploaded_file is not None:
     # Read the CSV file into a DataFrame
     df = pd.read_csv(uploaded_file)
@@ -72,7 +86,7 @@ if uploaded_file is not None:
     # Allow users to choose a column for analysis
     selected_column = st.selectbox("Select a column for analysis:", df.columns)
 
-    if st.button('Analyze Sentiment') and selected_column:
+    if st.button('Analyze Sentiment CSV') and selected_column:
         # Perform sentiment analysis on the selected column
         st.subheader(f'Sentiment Analysis for "{selected_column}":')
         df['Sentiment'] = df[selected_column].apply(analyze_sentiment)
@@ -83,20 +97,6 @@ if uploaded_file is not None:
         text = ' '.join(df[selected_column].astype(str))
         fig = generate_wordcloud(text)
         st.pyplot(fig)
-
-# Option to enter text
-user_input = st.text_area("Enter text", height=200, value='Sample input text')
-
-if st.button('Analyze Sentiment') and user_input:
-    # Perform sentiment analysis on user-provided text
-    st.subheader('Sentiment Analysis Result:')
-    sentiment = analyze_sentiment(user_input)
-    st.write(f'Sentiment: {sentiment}')
-
-if st.button('Generate Word Cloud') and user_input:
-    # Generate word cloud from user-provided text
-    fig = generate_wordcloud(user_input)
-    st.pyplot(fig)
 
 adjectives, nouns = pos_tag_text(user_input)
 st.write('Extracted Adjectives:', ', '.join(adjectives))
