@@ -27,21 +27,28 @@ analyzer = SentimentIntensityAnalyzer()
 
 # Sentiment analysis function
 def analyze_sentiment(text):
-    sentiment_scores = analyzer.polarity_scores(text)
-    compound_score = float(sentiment_scores['compound'])
+    try:
+        # Check if the text is already a string
+        if not isinstance(text, str):
+            text = str(text)
+        
+        sentiment_scores = analyzer.polarity_scores(text)
+        compound_score = float(sentiment_scores['compound'])
 
-    if compound_score >= 0.5:
-        return "Highly Positive"
-    elif compound_score < 0.5 and compound_score > 0:
-        return "Slightly Positive"
-    elif compound_score == 0:
-        return "Neutral"
-    elif compound_score < 0 and compound_score >= -0.5:
-        return "Slightly Negative"
-    elif compound_score < -0.5:
-        return "Highly Negative"
-    else:
-        return "Unknown"
+        if compound_score >= 0.5:
+            return "Highly Positive"
+        elif compound_score < 0.5 and compound_score > 0:
+            return "Slightly Positive"
+        elif compound_score == 0:
+            return "Neutral"
+        elif compound_score < 0 and compound_score >= -0.5:
+            return "Slightly Negative"
+        elif compound_score < -0.5:
+            return "Highly Negative"
+        else:
+            return "Unknown"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 # Wordcloud function
 def generate_wordcloud(text):
