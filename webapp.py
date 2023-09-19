@@ -71,7 +71,7 @@ def pos_tag_text(text):
     return adjectives, nouns
 
 # Option to enter text
-user_input = st.text_area("Enter text", height=200, value='Sample input text')
+user_input = st.text_area("Enter text", height=200, value='')
 
 if st.button('Analyze Sentiment Text') and user_input:
     # Perform sentiment analysis on user-provided text
