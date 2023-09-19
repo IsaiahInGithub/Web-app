@@ -35,15 +35,17 @@ def analyze_sentiment(text):
     compound_score = float(sentiment_scores['compound'])
   
     if compound_score >= 0.5:
-        st.write("Sentiment: Highly Positive")
+        return "Highly Positive"
     elif compound_score < 0.5 and compound_score > 0:
-        st.write("Sentiment: Slightly Positive")
+        return "Slightly Positive"
     elif compound_score == 0:
-        st.write("Sentiment: Neutral")
+        return "Neutral"
     elif compound_score < 0 and compound_score >= -0.5:
-        st.write("Sentiment: Slightly Negative")
+        return "Slightly Negative"
     elif compound_score < -0.5:
-        st.write("Sentiment: Highly Negative")
+        return "Highly Negative"
+    else:
+        return "Unknown"
 
 # Wordcloud function
 def generate_wordcloud(text):
@@ -79,12 +81,12 @@ if uploaded_file is not None:
 
     if selected_column:
         # Perform sentiment analysis on the selected column
-        st.subheader('Sentiment Analysis Results:')
+        st.subheader(f'Sentiment Analysis for "{selected_column}":')
         df['Sentiment'] = df[selected_column].apply(analyze_sentiment)
-        # The sentiment is displayed within the analyze_sentiment function
+        st.write(df[[selected_column, 'Sentiment']])
 
         # Generate word cloud from the selected column
-        st.subheader('Word Cloud:')
+        st.subheader(f'Word Cloud for "{selected_column}":')
         text = ' '.join(df[selected_column].astype(str))
         fig = generate_wordcloud(text)
         st.pyplot(fig)
@@ -95,7 +97,8 @@ user_input = st.text_area("Enter text", height=200, value='Sample input text')
 if st.button('Analyze Sentiment'):
     if user_input:
         st.subheader('Sentiment Analysis Result:')
-        analyze_sentiment(user_input)
+        sentiment = analyze_sentiment(user_input)
+        st.write(f'Sentiment: {sentiment}')
     else:
         st.warning('Please enter text for analysis')
 
