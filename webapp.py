@@ -23,23 +23,27 @@ nltk.download('averaged_perceptron_tagger')  # Download data for the tagger
 # Header 
 st.title('Sentiment Analysis App :sunglasses:')
 
-# Input text 
-user_input = st.text_area("Enter text", height=200, value='Sample input text')
+# Option to upload CSV file
+uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
 # VADER initialization
 analyzer = SentimentIntensityAnalyzer()
 
 # Sentiment analysis function
 def analyze_sentiment(text):
-    scores = analyzer.polarity_scores(text)
-    compound = scores['compound']
+    sentiment_scores = analyzer.polarity_scores(text)
+    compound_score = float(sentiment_scores['compound'])
   
-    if compound >= 0.5:
-        return 'Positive'
-    elif compound <= -0.5:
-        return 'Negative'
-    else:
-        return 'Neutral'
+    if compound_score >= 0.5:
+        st.write("Sentiment: Highly Positive")
+    elif compound_score < 0.5 and compound_score > 0:
+        st.write("Sentiment: Slightly Positive")
+    elif compound_score == 0:
+        st.write("Sentiment: Neutral")
+    elif compound_score < 0 and compound_score >= -0.5:
+        st.write("Sentiment: Slightly Negative")
+    elif compound_score < -0.5:
+        st.write("Sentiment: Highly Negative")
 
 # Wordcloud function
 def generate_wordcloud(text):
@@ -64,13 +68,37 @@ def pos_tag_text(text):
     
     return adjectives, nouns
 
+if uploaded_file is not None:
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv(uploaded_file)
+    st.write("Uploaded CSV Data:")
+    st.write(df)
+    
+    # Allow users to choose a column for analysis
+    selected_column = st.selectbox("Select a column for analysis:", df.columns)
+
+    if selected_column:
+        # Perform sentiment analysis on the selected column
+        st.subheader('Sentiment Analysis Results:')
+        df['Sentiment'] = df[selected_column].apply(analyze_sentiment)
+        # The sentiment is displayed within the analyze_sentiment function
+
+        # Generate word cloud from the selected column
+        st.subheader('Word Cloud:')
+        text = ' '.join(df[selected_column].astype(str))
+        fig = generate_wordcloud(text)
+        st.pyplot(fig)
+
+# Option to enter text
+user_input = st.text_area("Enter text", height=200, value='Sample input text')
+
 if st.button('Analyze Sentiment'):
     if user_input:
-        sentiment = analyze_sentiment(user_input)
-        st.success(f'Sentiment: {sentiment}')
+        st.subheader('Sentiment Analysis Result:')
+        analyze_sentiment(user_input)
     else:
         st.warning('Please enter text for analysis')
-        
+
 if st.button('Generate Word Cloud'):
     if user_input:
         fig = generate_wordcloud(user_input)
@@ -84,4 +112,4 @@ st.write('Extracted Nouns:', ', '.join(nouns))
 
 # Sidebar
 st.sidebar.header('About')
-st.sidebar.info('This app performs sentiment analysis using VADER and also generates word clouds and extracts parts of speech from input text.')
+st.sidebar.info('This app performs sentiment analysis using VADER, generates word clouds, and extracts parts of speech from input text or uploaded CSV files.')
