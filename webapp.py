@@ -106,8 +106,13 @@ if uploaded_file is not None:
         st.pyplot(fig)
 
 # Display extracted adjectives and nouns
-if st.button('Extract Adjectives and Nouns') and user_input:
-    adjectives, nouns = pos_tag_text(user_input)
+if st.button('Extract Adjectives and Nouns') and (user_input or (uploaded_file is not None and selected_column)):
+    if user_input:
+        adjectives, nouns = pos_tag_text(user_input)
+    elif uploaded_file is not None and selected_column:
+        text = ' '.join(df[selected_column].astype(str))
+        adjectives, nouns = pos_tag_text(text)
+    
     st.subheader('Extracted Adjectives:')
     st.write(', '.join(adjectives) if adjectives else 'No adjectives found')
 
