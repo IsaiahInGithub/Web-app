@@ -105,9 +105,14 @@ if uploaded_file is not None:
         fig = generate_wordcloud(text)
         st.pyplot(fig)
 
-adjectives, nouns = pos_tag_text(user_input)
-st.write('Extracted Adjectives:', ', '.join(adjectives))
-st.write('Extracted Nouns:', ', '.join(nouns))
+# Display extracted adjectives and nouns
+if st.button('Extract Adjectives and Nouns') and user_input:
+    adjectives, nouns = pos_tag_text(user_input)
+    st.subheader('Extracted Adjectives:')
+    st.write(', '.join(adjectives) if adjectives else 'No adjectives found')
+
+    st.subheader('Extracted Nouns:')
+    st.write(', '.join(nouns) if nouns else 'No nouns found')
 
 # Sidebar
 st.sidebar.header('About')
