@@ -18,6 +18,7 @@ nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 nltk.download('punkt')  # Download data for sentence tokenization
+nltk.download('averaged_perceptron_tagger')  # Download data for the tagger
 
 # Header 
 st.title('Sentiment Analysis App :sunglasses:')
