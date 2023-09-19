@@ -17,6 +17,7 @@ nltk.download('vader_lexicon')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('omw-1.4')
+nltk.download('punkt')  # Download data for sentence tokenization
 
 # Header 
 st.title('Sentiment Analysis App :sunglasses:')
@@ -29,15 +30,15 @@ analyzer = SentimentIntensityAnalyzer()
 
 # Sentiment analysis function
 def analyze_sentiment(text):
-  scores = analyzer.polarity_scores(text)
-  compound = scores['compound']
+    scores = analyzer.polarity_scores(text)
+    compound = scores['compound']
   
-  if compound >= 0.5:
-    return 'Positive'
-  elif compound <= -0.5:
-    return 'Negative'
-  else:
-    return 'Neutral'
+    if compound >= 0.5:
+        return 'Positive'
+    elif compound <= -0.5:
+        return 'Negative'
+    else:
+        return 'Neutral'
 
 # Wordcloud function
 def generate_wordcloud(text):
@@ -52,6 +53,9 @@ def generate_wordcloud(text):
 
 # Parts of speech function
 def pos_tag_text(text):
+    # Ensure that NLTK's data for sentence tokenization is available
+    nltk.data.find('tokenizers/punkt')
+    
     tokens = word_tokenize(text)
     tagged = nltk.pos_tag(tokens)  
     adjectives = [word for word, tag in tagged if tag.startswith('JJ')]
@@ -79,4 +83,4 @@ st.write('Extracted Nouns:', ', '.join(nouns))
 
 # Sidebar
 st.sidebar.header('About')
-st.sidebar.info('This app performs sentiment analysis using VADER and also generates wordclouds and extracts parts of speech from input text.')
+st.sidebar.info('This app performs sentiment analysis using VADER and also generates word clouds and extracts parts of speech from input text.')
